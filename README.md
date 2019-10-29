@@ -1,4 +1,4 @@
-# flutter_second
+# Flutter CRUD
 
 CRUD example Flutter App with Firebase
 
