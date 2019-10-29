@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 import '../pages/product_create.dart';
+import '../models/product.dart';
+import '../scoped-models/main.dart';
 
-class Products extends StatelessWidget {
-  final Map product;
-  final Function updateProduct;
+class Products extends StatefulWidget {
+  final MProduct product;
   final int index;
 
-  Products(this.product, this.updateProduct, this.index);
+  Products(this.product, this.index);
+
+  @override
+  State<StatefulWidget> createState() {
+    return ProductsState();
+  }
+}
+
+class ProductsState extends State<Products> {
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +27,8 @@ class Products extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Container(
-              child: Image.asset(
-                product['image'],
+              child: Image.network(
+                widget.product.image,
                 width: 120.0,
               ),
               padding: EdgeInsets.only(right: 6.0),
@@ -33,7 +43,7 @@ class Products extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 5.0),
                   child: Text(
-                    product['title'],
+                    widget.product.title,
                     style:
                         TextStyle(fontSize: 17.0, fontWeight: FontWeight.w400),
                   ),
@@ -41,12 +51,12 @@ class Products extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 10.0),
                   child: Text(
-                    '\$' + product['price'].toString(),
+                    '\$' + widget.product.price.toString(),
                     style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                 ),
                 Text(
-                  product['description'],
+                  widget.product.description,
                   style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w300),
                   overflow: TextOverflow.fade,
                   softWrap: true,
@@ -56,21 +66,25 @@ class Products extends StatelessWidget {
           ),
           Expanded(
             flex: 1,
-            child: FlatButton(
-              child: Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) {
-                    return ProductCreatePage(
-                      product: product,
-                      updateProduct: updateProduct,
-                      productIndex: index,
-                    );
-                  }),
-                );
-              },
-            ),
+            child: ScopedModelDescendant<MainModel>(builder: (BuildContext context, Widget child, MainModel model) {
+              return FlatButton(
+                child: Icon(Icons.edit),
+                onPressed: () {
+                  model.selectProduct(widget.index);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) {
+                      return ProductCreatePage();
+                    })
+                  ).then((value) {
+                    if(value) {
+                      model.resetSelectProduct();
+                      model.fetchProduct();
+                    }
+                  });
+                },
+              );
+            }),
           )
         ],
       ),

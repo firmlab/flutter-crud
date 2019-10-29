@@ -5,12 +5,6 @@ import 'product_list.dart';
 import 'product_create.dart';
 
 class HomePage extends StatelessWidget {
-  final List<Map> products;
-  final Function addProduct;
-  final Function updateProduct;
-  final Function deleteProduct;
-
-  HomePage(this.products, this.addProduct, this.updateProduct, this.deleteProduct);
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +45,8 @@ class HomePage extends StatelessWidget {
         ),
         body: TabBarView(
           children: <Widget>[
-            ProductListPage(products, updateProduct, deleteProduct),
-            ProductCreatePage(addProduct: addProduct),
+            ProductListPage(),
+            ProductCreatePage(),
           ],
         ),
       ),

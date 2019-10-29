@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../scoped-models/main.dart';
+import 'package:scoped_model/scoped_model.dart';
 
 class AuthPage extends StatefulWidget {
-@override
+  @override
   State<StatefulWidget> createState() {
     return _AuthPageState();
   }
@@ -12,11 +14,12 @@ class _AuthPageState extends State<AuthPage> {
   String email;
   String password;
 
-  submitForm(context) {
-    if(!formKey.currentState.validate()) {
+  submitForm(context, Function login) {
+    if (!formKey.currentState.validate()) {
       return;
     }
     formKey.currentState.save();
+    login(email, password);
     Navigator.pushReplacementNamed(context, '/home');
   }
 
@@ -25,8 +28,6 @@ class _AuthPageState extends State<AuthPage> {
     Size size = MediaQuery.of(context).size;
     final double deviceWidth = MediaQuery.of(context).size.width;
     final double targetWidth = deviceWidth > 500.0 ? 400.0 : deviceWidth * 0.95;
-
-    
 
     return Scaffold(
         // appBar: AppBar(
@@ -74,7 +75,7 @@ class _AuthPageState extends State<AuthPage> {
                           });
                         },
                         validator: (value) {
-                          if(value.isEmpty) {
+                          if (value.isEmpty) {
                             return 'Email field is required';
                           }
                         },
@@ -90,7 +91,7 @@ class _AuthPageState extends State<AuthPage> {
                           });
                         },
                         validator: (value) {
-                          if(value.isEmpty) {
+                          if (value.isEmpty) {
                             return 'Password field is required';
                           }
                         },
@@ -100,16 +101,20 @@ class _AuthPageState extends State<AuthPage> {
                       ),
                       Container(
                         width: double.infinity,
-                        child: RaisedButton(
-                          child: Text(
-                            'LOGIN',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          color: Theme.of(context).primaryColor,
-                          onPressed: () {
-                            submitForm(context);
-                          },
-                        ),
+                        child: ScopedModelDescendant<MainModel>(builder:
+                            (BuildContext context, Widget child,
+                                MainModel model) {
+                            return RaisedButton(
+                              child: Text(
+                                'LOGIN',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              color: Theme.of(context).primaryColor,
+                              onPressed: () {
+                                submitForm(context, model.login);
+                              },
+                            );
+                        }),
                       )
                     ],
                   ),

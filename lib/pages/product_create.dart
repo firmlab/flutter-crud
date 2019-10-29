@@ -1,13 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+
+import '../models/product.dart';
+import '../scoped-models/main.dart';
 
 class ProductCreatePage extends StatefulWidget {
-  final Function addProduct;
-  final Function updateProduct;
-  final Map product;
-  final int productIndex;
-
-  ProductCreatePage({this.addProduct, this.updateProduct, this.product, this.productIndex});
-
   @override
   State<StatefulWidget> createState() {
     return _ProductCreatePageState();
@@ -21,8 +19,9 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  void submitForm(context) {
-    String msg = widget.product == null
+  void submitForm(context, Function addProduct, Function updateProduct,
+      selectedProductIndex) {
+    String msg = selectedProductIndex == null
         ? 'Yay! Product Saved!'
         : 'Yay! Product Updated!';
 
@@ -35,29 +34,25 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
     }
     formKey.currentState.save();
 
-    Map formData = {
-      'title': productTitle,
-      'description': productDescription,
-      'price': productPrice,
-      'image': 'assets/bread.jpg'
-    };
+    MProduct formData = MProduct(
+        title: productTitle,
+        description: productDescription,
+        price: productPrice,
+        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9psvCSc5aL__sCoqeusLjhlfZ73UyqlJU5TPy-A5f1xaORzxiIA');
 
-    if (widget.product == null) {
-      widget.addProduct(formData);
-      Scaffold.of(context).showSnackBar(snackBar);
+    if (selectedProductIndex == null) {
+      addProduct(formData).then((_) {
+        Scaffold.of(context).showSnackBar(snackBar);
+        formKey.currentState.reset();
+      });
     } else {
-      widget.updateProduct(widget.productIndex, formData);
-      _scaffoldKey.currentState.showSnackBar(snackBar); 
-    }
-
-    if (widget.product == null) {
-      formKey.currentState.reset();
+      updateProduct(formData);
+      _scaffoldKey.currentState.showSnackBar(snackBar);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget pageContent = GestureDetector(
+  Widget _buildPageContent(context, model, selectedProduct) {
+    return GestureDetector(
       onTap: () {
         FocusScope.of(context).requestFocus(FocusNode());
       },
@@ -69,8 +64,9 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
             children: <Widget>[
               TextFormField(
                 maxLines: 1,
-                initialValue:
-                    widget.product == null ? '' : widget.product['title'],
+                initialValue: model.selectedProductIndex == null
+                    ? ''
+                    : selectedProduct.title,
                 decoration: InputDecoration(labelText: 'Product Title'),
                 onSaved: (value) {
                   // setState(() {
@@ -85,9 +81,9 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
               ),
               TextFormField(
                 maxLines: 1,
-                initialValue: widget.product == null
+                initialValue: model.selectedProductIndex == null
                     ? ''
-                    : widget.product['price'].toString(),
+                    : selectedProduct.price.toString(),
                 decoration: InputDecoration(labelText: 'Product Price'),
                 keyboardType: TextInputType.number,
                 onSaved: (value) {
@@ -103,8 +99,9 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
               ),
               TextFormField(
                 maxLines: 4,
-                initialValue:
-                    widget.product == null ? '' : widget.product['description'],
+                initialValue: model.selectedProductIndex == null
+                    ? ''
+                    : selectedProduct.description,
                 decoration: InputDecoration(labelText: 'Product Description'),
                 onSaved: (value) {
                   // setState(() {
@@ -119,12 +116,28 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
               ),
               Container(
                 margin: EdgeInsets.only(top: 20.0),
-                child: RaisedButton(
-                  color: Theme.of(context).primaryColor,
-                  textColor: Colors.white,
-                  child: Text('SAVE'),
-                  onPressed: () {
-                    submitForm(context);
+                child: ScopedModelDescendant<MainModel>(
+                  builder:
+                      (BuildContext context, Widget child, MainModel modelM) {
+                    return modelM.loadingState
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.blueAccent),
+                            ),
+                          )
+                        : RaisedButton(
+                            color: Theme.of(context).primaryColor,
+                            textColor: Colors.white,
+                            child: Text('SAVE'),
+                            onPressed: () {
+                              submitForm(
+                                  context,
+                                  model.addProduct,
+                                  model.updateProduct,
+                                  model.selectedProductIndex);
+                            },
+                          );
                   },
                 ),
               ),
@@ -133,17 +146,34 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
         ),
       ),
     );
+  }
 
-    return widget.product == null
-        ? pageContent
-        : Scaffold(
-            appBar: AppBar(
-              title: Text('Edit Product'),
-            ),
-            key: _scaffoldKey,
-            body: Builder(builder: (BuildContext context) {
-              return pageContent;
-            }),
-          );
+  @override
+  Widget build(BuildContext context) {
+    return ScopedModelDescendant<MainModel>(
+        rebuildOnChange: false,
+        builder: (BuildContext context, Widget child, MainModel model) {
+          final MProduct selectedProduct = model.selectedProductIndex == null
+              ? MProduct(
+                  title: null, description: null, image: null, price: null)
+              : model.selectedProduct;
+
+          return model.selectedProductIndex == null
+              ? _buildPageContent(context, model, selectedProduct)
+              : WillPopScope(
+                  onWillPop: () {
+                    Navigator.pop(context, true);
+                    //future params harus false, biar g tabrakan dengan navigator.pop, jadi yang dipassing datanya adalah dari navigator
+                    return Future.value(false);
+                  },
+                  child: Scaffold(
+                    appBar: AppBar(
+                      title: Text('Edit Product'),
+                    ),
+                    key: _scaffoldKey,
+                    body: _buildPageContent(context, model, selectedProduct),
+                  ),
+                );
+        });
   }
 }
