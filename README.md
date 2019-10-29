@@ -1,16 +1,12 @@
 # flutter_second
 
-A new Flutter project.
+CRUD example Flutter App with Firebase
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Before build or run, make sure you change the `BASE_URL_API` on `lib/utils/constants.dart` to your firebase URL
 
-A few resources to get you started if this is your first Flutter project:
+You can see the firebase json example here
+`/assets/data-example.json`
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+For now, the login functionality is just a dummy, you can input anything and it will go through.
